@@ -205,6 +205,8 @@ Do not merge all documents into one file; use `README.md` as the index page.
 - Match `project.godot` `window/size/viewport_width` and `window/size/viewport_height` to chosen render resolution.
 - In `export_presets.cfg`, default to `html/canvas_resize_policy=0` and explicitly manage canvas buffer size.
 - If using `export_filter="all_resources"` in `export_presets.cfg`, include at least these in `exclude_filter`: `build/web/*`, `.godot/*`, `.tmp-godot-data/*`, `.tmp-godot-config/*`, `.tmp-godot-cache/*`, `logs/*`, `tools/tests/*`.
+- When using project-local XDG directories for export, Godot searches for export templates under project-local `XDG_DATA_HOME`; if templates are installed under the normal user data directory, set `custom_template/debug` and `custom_template/release` in the copied project's `export_presets.cfg` to absolute template paths before export.
+- Create the Web export output directory (for example `mkdir -p build/web`) before running `--export-release`; Godot does not reliably create missing parent directories.
 - Require `html/custom_html_shell` and treat `res://web/custom_shell.html` as source of truth.
 - `web/custom_shell.html` must:
   - Explicitly set `<canvas id="canvas" width="..." height="...">`

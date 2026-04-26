@@ -13,6 +13,7 @@ Core rules:
 - Implement game-specific mechanics, visuals, and SFX in the target project after copying.
 - Keep `main.gd` as orchestration and split responsibilities into focused scripts.
 - Preserve Web export canvas sizing rules unless the project updates `project.godot`, `export_presets.cfg`, and `web/custom_shell.html` together.
+- Do not hardcode machine-specific export template paths in the bundled template. After copying, a project may set `custom_template/debug` and `custom_template/release` to absolute local paths when using project-local XDG directories.
 
 Typical start:
 
