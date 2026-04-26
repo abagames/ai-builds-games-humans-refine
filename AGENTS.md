@@ -271,6 +271,8 @@ exploratory_ratio = exploratory.best.score / monotonous.max_score
 | 1.0 - 1.5         | Needs work  | Skill reflection is insufficient           |
 | > 1.5             | Pass        | Better play is rewarded                    |
 
+Treat command success as runtime/schema success only. Mechanics pass/fail must be judged from `logs/test.json` `exploratory_ratio` and the checklist below; a test command may exit 0 while mechanics evaluation fails.
+
 Exploratory ratio is necessary but not sufficient. KPI gains with degraded experience are rejected.
 
 Check:
@@ -327,6 +329,7 @@ Per evaluation, choose 2-3 operators and vary combinations across proposals.
 
 - Identify root causes (logic changes, not mere numeric tuning)
 - Apply/compare patterns from `.agents/skills/gameplay-balance-evaluation/references/balance-patterns.md` in candidate options
+- For later Godot implementation in Phase 8, consult `.agents/skills/godot-mini-game-template/references/godot-balance-pattern-examples.md` after choosing an engine-neutral pattern.
 - Treat "state variables requiring explanation" as reduction targets and integrate into world-side behavior
 - Improvement report must record: "3 presented options", "adoption-candidate rationale", and "rejection rationale"
 - Implement only after humans choose an option in Phase 8

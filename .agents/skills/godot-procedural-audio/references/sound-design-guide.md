@@ -152,6 +152,7 @@ Implementation notes:
 
 - Keep PCM cache in `PackedByteArray` (16-bit PCM), convert to `AudioStreamWAV`, and reuse.
 - For continuous sound only, monitor `frames_available` / `get_skips()` and retry queues or adjust load when needed.
+- In headless runs (`OS.has_feature("headless")`), skip `AudioStreamPlayer` creation/playback/buffer filling and return no-op handles so tests remain logic-only.
 
 ### 5.2 Event Semantics Lock (In-Game)
 
