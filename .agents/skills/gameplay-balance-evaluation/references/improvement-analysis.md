@@ -1,29 +1,28 @@
-# Godot Mini-Game Improvement Guide
+# Gameplay Balance Improvement Analysis
 
-Guide for improving Godot 4.2+ action mini-games based on headless test results.  
+Guide for improving action mini-games based on repeatable simulation or playtest telemetry.
 The purpose is structural improvement of rules, generation logic, and state transitions, not numeric micro-tuning.
 
 ## Important: Canonical Guardrails
 
-For KPI operation and prohibitions, use `AGENTS.md` as the source of truth (Experience-First Principle / KPI Guardrails).  
-Under those guardrails, this guide covers only improvement analysis and implementation patterns.
+When this reference is used inside a repository with an `AGENTS.md`, that file remains the source of truth for project-specific execution rules. This reference covers reusable improvement analysis and implementation patterns.
 
 Notes:
 
-- Even when this guide uses exploratory ratio, judgment criteria themselves follow `AGENTS.md`.
+- Even when this guide uses exploratory ratio, treat the metric as a detector rather than the target.
 - Treat survival time as a supporting metric and prioritize experience quality.
 
 ## 1. Purpose of This Guide
 
-Analyze output logs from `tools/tests/run_tests.gd` and perform the following.
+Analyze output logs from a repeatable test harness and perform the following.
 
 - **Root Cause Identification**: identify design defects, not just surface symptoms
 - **Structural Improvement**: change rules and generation algorithms
 - **Verification Loop**: Re-compare before and after with the same metric set
 
-## 2. Log Input Contract (Godot)
+## 2. Log Input Contract
 
-The analysis target is the structure below output by `run_tests.gd` to `logs/test.json`.
+The preferred engine-neutral contract is defined in `log-contract.md`. The analysis target is the structure below.
 
 ```json
 {
@@ -31,14 +30,14 @@ The analysis target is the structure below output by `run_tests.gd` to `logs/tes
   "timestamp_utc": "2026-03-05T12:00:00",
   "monotonous": {
     "cases": {
-      "no_input":      {"score": 0,  "elapsed": 4.2,  "game_over": true},
-      "hold_primary":  {"score": 30, "elapsed": 16.7, "game_over": true},
-      "pulse_primary": {"score": 42, "elapsed": 18.1, "game_over": true}
+      "no_input":     {"score": 0,  "elapsed": 4.2,  "ended": true},
+      "hold_action":  {"score": 30, "elapsed": 16.7, "ended": true},
+      "spam_action":  {"score": 42, "elapsed": 18.1, "ended": true}
     },
     "max_score": 42
   },
   "exploratory": {
-    "best": {"score": 95, "elapsed": 24.9, "game_over": true},
+    "best": {"score": 95, "elapsed": 24.9, "ended": true},
     "best_seed": 2001,
     "best_variant": 3
   },
@@ -52,7 +51,7 @@ The analysis target is the structure below output by `run_tests.gd` to `logs/tes
 }
 ```
 
-- Default keys for `monotonous.cases` are `no_input` / `hold_primary` / `pulse_primary`. If the game implements `get_monotonous_policies()`, custom keys are used.
+- Default keys for `monotonous.cases` are `no_input` / `hold_action` / `spam_action`; custom policies are allowed when they match the game's controls.
 - `exploratory_ratio` is placed at top level (`exploratory.best.score / monotonous.max_score`).
 - `telemetry` details may vary by game implementation, but the following four perspectives must be preserved.
 
@@ -72,7 +71,7 @@ Typical causes:
 - High-speed entry without telegraph
 - Insufficient failure-recovery design such as i-frames/knockback
 
-Related balance patterns: `balance-pattern-guide.md` §1.1 (sqrt transform), §3.1/3.3 (boundary handling), §6.1 (safe distance)
+Related balance patterns: `balance-patterns.md` §1.1 (sqrt transform), §3.1/3.3 (boundary handling), §6.1 (safe distance)
 
 ### 3.2 Spawn Analysis
 
@@ -88,7 +87,7 @@ Typical causes:
 - Pure random spawning without spatial-cell management
 - Constraint release during difficulty increase is too abrupt
 
-Related balance patterns: `balance-pattern-guide.md` §1.3 (inverse spawn interval), §6.2-6.4 (spawn control)
+Related balance patterns: `balance-patterns.md` §1.3 (inverse spawn interval), §6.2-6.4 (spawn control)
 
 ### 3.3 Scoring Analysis
 
@@ -105,7 +104,7 @@ Typical causes:
 - No risk-linked multiplier
 - Insufficient per-phase reward redesign
 
-Related balance patterns: `balance-pattern-guide.md` §2.1 (risk-link), §2.3/2.4 (combo), §8.1 (timing window)
+Related balance patterns: `balance-patterns.md` §2.1 (risk-link), §2.3/2.4 (combo), §8.1 (timing window)
 
 ### 3.4 Input Analysis
 
@@ -121,7 +120,7 @@ Typical causes:
 - No context dependency in action selection
 - Player state machine is too simple
 
-Related balance patterns: `balance-pattern-guide.md` §4.3 (miss penalty), §5.1-5.3 (input response), §9.1/9.3 (state management)
+Related balance patterns: `balance-patterns.md` §4.3 (miss penalty), §5.1-5.3 (input response), §9.1/9.3 (state management)
 
 ### 3.5 Experience Integrity Gate
 
@@ -198,7 +197,7 @@ func apply_action_rule(action_mode: String) -> void:
 
 ### 4.3 Flat Difficulty Curve
 
-`difficulty` convention: initial value `1`, then `+1` every elapsed minute (see `guides/balance-pattern-guide.md` §1).
+`difficulty` convention: initial value `1`, then `+1` every elapsed minute (see `balance-patterns.md` §1).
 
 Symptoms:
 
@@ -268,13 +267,13 @@ func choose_spawn_cell(cells: Array, tick: int) -> int:
     return best_idx
 ```
 
-## 5. Improvement Process (Godot Headless)
+## 5. Improvement Process
 
 ### 5.1 Acquire Baseline Logs
 
-Collect `logs/test.log` using the Phase 6 command in `AGENTS.md`.
+Collect a baseline log from the project's repeatable test harness.
 
-Minimum values to persist (keys in `logs/test.json`):
+Minimum values to persist:
 
 - `monotonous.max_score`
 - `exploratory.best.score`
@@ -287,7 +286,7 @@ Focus on one problem per improvement.
 
 - Problem name
 - Root cause (logic)
-- Target script to change (by responsibility)
+- Target module/script/system to change (by responsibility)
 - Change details (rules/generation/state transitions)
 - Expected effect (which metrics change and how)
 - Experience hypothesis (what players learn and what feels good)
@@ -295,13 +294,13 @@ Focus on one problem per improvement.
 
 ### 5.3 Implement and Re-test
 
-- Apply **one** applicable pattern from `guides/balance-pattern-guide.md`
+- Apply **one** applicable pattern from `balance-patterns.md`
 - Re-test and compare exploratory ratio and supporting metrics again
 - If worsened, apply another pattern rather than immediate rollback
 
-### 5.4 Headless Screenshot Policy (Summary Capture)
+### 5.4 State Snapshot Policy (Optional)
 
-Treat screenshots such as `logs/screens/scene_a.png` as **state-consistency evidence** in headless mode, not exact render captures.
+Treat generated screenshots or state summaries as **state-consistency evidence**, not exact final-render judgment.
 
 - Purpose:
   - Record Scene A/B/C phase differences (low-density/high-density/pre-post damage) reproducibly
@@ -309,16 +308,16 @@ Treat screenshots such as `logs/screens/scene_a.png` as **state-consistency evid
 - Non-purpose:
   - Judging final quality of glow, post effects, fonts, or final UI appearance
 - Implementation recommendation:
-  - From `run_tests.gd`, call a test API such as `capture_debug_frame(path)` to generate images from game state
+  - From the test harness, call an API such as `capture_debug_frame(path)` to generate images from game state
   - Fix capture timing (encode Scene A/B/C conditions) and prioritize comparability
-  - If `ViewportTexture` is unstable in headless mode, use the state-snapshot method as canonical
+  - If the engine's render capture is unstable in automation, use the state-snapshot method as canonical
 - Evaluation operation:
   - Web/manual-play screenshots are the source of truth for visual quality
   - Limit headless images to CI regression checks (composition/density/role breakdown detection)
 
 #### Minimal Implementation Pattern
 
-Provide an image-generation API on the `main.gd` side callable from tests.
+Provide an image-generation or state-summary API callable from tests. The example below uses GDScript-style pseudocode, but the contract is engine-neutral.
 
 ```gdscript
 # main.gd
@@ -339,10 +338,10 @@ func capture_debug_frame(path: String) -> void:
     img.save_png(path)
 ```
 
-Invoke from `run_tests.gd` under fixed-scene conditions.
+Invoke from the automated test harness under fixed-scene conditions.
 
 ```gdscript
-# tools/tests/run_tests.gd
+# test harness pseudocode
 func _capture_screenshots(game: Node) -> void:
     game.force_reset_for_test(3001) # Scene A: low density
     _step_for_scene_a(game)

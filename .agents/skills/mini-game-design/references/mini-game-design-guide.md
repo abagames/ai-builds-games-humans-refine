@@ -36,7 +36,7 @@ Integrate "principles (what to do)" and "evaluation (confirmation items)" to cla
 
 ## 3. Interaction Patterns (Reference)
 
-Examples of mechanics based on input. These are starting points for ideas, not constraints. The number of available buttons is determined by `button_types` (1–5) chosen in Phase 1.
+Examples of mechanics based on input. These are starting points for ideas, not constraints. If a button-count limit is provided by the project brief, design within it.
 
 ### 3.1 Single-Button State Patterns
 
@@ -128,7 +128,7 @@ When contradicting tags are given, it's an opportunity for invention, not a cons
 
 ## 9. Output Format
 
-Output in the following format to `tmp/games/<slug>/README.md`.
+Output in the following format to the project's game design document, e.g. `tmp/games/<slug>/README.md` in this repository.
 
 ```markdown
 # <GAME_NAME> (<slug>)
@@ -155,7 +155,7 @@ Notes:
 ## 1. Core Mechanics
 
 <Input → Behavior → End condition, scoring system, difficulty increase mechanism>
-<difficulty variable convention: initial value 1, +1 per elapsed minute — see balance-pattern-guide.md §1>
+<difficulty variable convention: initial value 1, +1 per elapsed minute — see `.agents/skills/gameplay-balance-evaluation/references/balance-patterns.md` §1>
 
 ## 1.5 Tradeoff Definition
 
@@ -183,7 +183,7 @@ Notes:
 
 Confirm the following before completing design.
 
-- [ ] Is the input scheme within the `button_types` limit chosen in Phase 1?
+- [ ] Is the input scheme within the button-count limit chosen in the project brief?
 - [ ] Is the game over condition single and visually obvious?
 - [ ] Is button mashing/idle play not the optimal solution?
 - [ ] Can you provide reasoned answers to all 4 principles in §2?

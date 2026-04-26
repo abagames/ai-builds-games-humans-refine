@@ -26,18 +26,18 @@ This guide covers unified management via `Theme`, text effect design, and font-l
 - Use text as a state indicator, not decoration.
 - Provide visual reactions for score gain, damage, danger, combos, etc.
 
-## 3. Phased Implementation Flow (Phase 5 -> Phase 8)
+## 3. Phased Implementation Flow
 
-Typography is implemented in two stages, matching AGENTS Phase 5 and Phase 8.
+Typography is usually implemented in two stages: a fallback-font stage during early implementation, then a full font-adoption stage after the game feel and visual direction are stable.
 
-### Phase 5 (Initial implementation)
+### Initial implementation
 
 - Implement with `ThemeDB.fallback_font` only (no external font bundling).
 - Define role-based size/color tokens in a `Theme` resource (see §4).
 - Keep font slots empty and finish layout/effect logic first.
 - Record in `TYPOGRAPHY_DECISION.md` that fonts are not selected yet and fallback is in use.
 
-### Phase 8 (Full font adoption)
+### Full font adoption
 
 - Compare and select fonts using human feedback.
 - Bundle only adopted fonts into `res://assets/fonts/` (no bulk candidate bundling).
@@ -149,7 +149,7 @@ res://
 
 ## 9. Required Deliverables per Game
 
-For each `tmp/games/<slug>/`:
+For each game project, record the typography decision and license state. In this repository, the target path is `tmp/games/<slug>/`.
 
 - `VISUAL_DESIGN.md`
   - Document typography policy (roles, size hierarchy, colors, effect rules)

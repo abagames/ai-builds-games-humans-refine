@@ -1,6 +1,6 @@
 # Visual Design Guide
 
-A guide for designing the visual layer of action mini-games using visual tags as creative seeds. Parallel to `guides/mini-game-design-guide.md` (which covers mechanics), this document covers screen composition, rendering style, feedback effects, and visual coherence.
+A guide for designing the visual layer of action mini-games using visual tags as creative seeds. Parallel to `.agents/skills/mini-game-design/references/mini-game-design-guide.md` (which covers mechanics), this document covers screen composition, rendering style, feedback effects, and visual coherence.
 
 ## 1. Design Challenges
 
@@ -33,7 +33,7 @@ A guide for designing the visual layer of action mini-games using visual tags as
 
 ## 3. Role of Visual Tags
 
-Visual tags follow the same philosophy as mechanism tags (see `guides/mini-game-design-guide.md` §5):
+Visual tags follow the same philosophy as mechanism tags (see `.agents/skills/mini-game-design/references/mini-game-design-guide.md` §5):
 
 - **Stimulus, not constraint**: Tags suggest a visual direction; the final design may depart from them.
 - **Contradiction is opportunity**: Conflicting tags create unique visual identities (see §7).
@@ -55,7 +55,7 @@ Visual tags follow the same philosophy as mechanism tags (see `guides/mini-game-
 | `typography-*` | Text integration | How scores, labels, and glyphs exist in the game world |
 | `composition-*` | Screen layout | Spatial organization, negative space, visual hierarchy |
 
-> Note: Typography implementation and font licensing policy (including Web export redistribution) is defined in `guides/typography-implementation-guide.md`.
+> Note: Typography implementation and font licensing policy (including Web export redistribution) is defined in `.agents/skills/godot-web-typography/references/typography-implementation-guide.md`.
 
 ### 4.2 Category Interaction Map
 
@@ -71,7 +71,7 @@ Categories are not independent. Typical synergies:
 
 ## 5. Procedure for Visual Design from Tags
 
-Design in the following order after mechanism design (Phase 2) is complete.
+Design in the following order after the core mechanics are defined.
 
 1. **Tag Interpretation**: Read each tag's `description` and `keywords`. Verbalize the mood, texture, and motion quality they suggest.
 2. **Cross-Tag Synthesis**: Find the visual theme that unifies all selected tags. Express it in one phrase (e.g., "pulsing neon organisms," "crisp geometric clockwork").
@@ -136,7 +136,7 @@ When contradicting visual tags are given, invent a unified style, don't pick one
 
 ## 7.1 VISUAL_DESIGN.md Required Addendum Template (AI-Generated Look Suppression)
 
-When producing `tmp/games/<slug>/VISUAL_DESIGN.md`, include the following section template verbatim and fill each field.
+When producing a visual design document, include the following section template verbatim and fill each field.
 
 ```markdown
 ## 7. AI-Generated Look Suppression Rules
@@ -341,7 +341,7 @@ func flash_hit() -> void:
 
 ## 9. Output Format
 
-Output in the following format to `tmp/games/<slug>/VISUAL_DESIGN.md`.
+Output in the following format to the project's visual design document, e.g. `tmp/games/<slug>/VISUAL_DESIGN.md` in this repository.
 
 ```markdown
 # Visual Design: <GAME_NAME>

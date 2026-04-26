@@ -132,8 +132,8 @@ All sounds are generated procedurally in GDScript. No pre-recorded `.wav`, `.ogg
 
 This section focuses on design decisions. Template assets are the source of truth for implementation code.
 
-- Waveform primitives and simple envelopes: `templates/godot-base/audio_synth.gd`
-- Test-driven implementation examples: `tmp/games/<slug>/main.gd`, `tmp/games/<slug>/tools/tests/run_tests.gd`
+- Waveform primitives and simple envelopes: `.agents/skills/godot-procedural-audio/assets/audio_synth.gd`
+- Test-driven implementation examples in this repository use `tmp/games/<slug>/main.gd` and `tmp/games/<slug>/tools/tests/run_tests.gd`; adapt paths to the project.
 
 ### 5.1 Runtime Architecture (Recommended)
 
@@ -222,7 +222,7 @@ Operational rules:
 
 ## 6. Procedure for Sound Design from Visual Tags
 
-Design after visual design (Phase 3) is complete.
+Design after the visual direction is complete.
 
 1. **Tag Interpretation**: Read each visual tag's `description` and `keywords`. Identify the sonic qualities they imply (refer to §3 mapping table).
 2. **Cross-Tag Audio Synthesis**: Find the shared audio character across all selected visual tags. Express it in one phrase (e.g., "resonant synthetic pulses," "gritty percussive clicks").
@@ -241,7 +241,7 @@ Design after visual design (Phase 3) is complete.
 
 ## 7. Output Format
 
-Output in the following format to `tmp/games/<slug>/SOUND_DESIGN.md`.
+Output in the following format to the project's sound design document, e.g. `tmp/games/<slug>/SOUND_DESIGN.md` in this repository.
 
 ```markdown
 # Sound Design: <GAME_NAME>

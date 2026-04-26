@@ -1,6 +1,6 @@
 # Balance Pattern Guide
 
-This guide provides patterns for adjusting game balance based on headless test results (`logs/test.json`). The patterns are extracted from analysis of 12 games that were manually improved from zero-touch generation to polished versions.
+This guide provides patterns for adjusting game balance based on repeatable telemetry such as `logs/test.json`. The patterns are extracted from action mini-games that were manually improved from first-pass generation to more polished versions.
 
 ## Overview
 
@@ -15,8 +15,7 @@ Balance adjustments fall into several categories:
 
 ## Guardrails (Read Before Applying Patterns)
 
-Canonical guardrails are defined in `AGENTS.md` (Experience-First Principle / KPI operation guardrails).  
-This guide only provides balance patterns to apply under those rules.
+When used inside a repository with an `AGENTS.md`, that file remains the source of truth for project-specific execution rules. This guide only provides reusable balance patterns to apply under those rules.
 
 Quick reminder:
 
@@ -667,7 +666,7 @@ func _process(delta):
 
 When applying balance patterns:
 
-1. **Run headless test first** (`run_tests.gd`) to identify problems
+1. **Run the repeatable balance test first** to identify problems
 2. **Check the problem → pattern table** above
 3. **Apply ONE pattern at a time**
 4. **Re-run headless test** to verify improvement

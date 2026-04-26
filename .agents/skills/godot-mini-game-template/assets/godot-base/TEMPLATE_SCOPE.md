@@ -1,6 +1,6 @@
 # Template Scope (Invariant Layer Only)
 
-`templates/godot-base/` is an infrastructure-only skeleton.
+This bundled `godot-base/` template is an infrastructure-only skeleton.
 It must not lock gameplay, visual identity, or audio identity.
 
 ## Allowed
