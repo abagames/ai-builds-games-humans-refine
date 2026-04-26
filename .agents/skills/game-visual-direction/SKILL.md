@@ -19,4 +19,4 @@ Workflow:
 4. Choose a 3-5 color palette with explicit gameplay roles.
 5. Validate readability, feedback clarity, coherence, and dynamic life.
 
-Read `references/visual-design-guide.md` for detailed pattern tables, Godot implementation examples, and the anti-generic visual addendum template.
+Read `references/visual-design-guide.md` for detailed pattern tables, design checklists, and the anti-generic visual addendum template.

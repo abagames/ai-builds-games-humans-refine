@@ -23,3 +23,5 @@ cp -r .agents/skills/godot-mini-game-template/assets/godot-base/ tmp/games/<slug
 
 After copying, use `headless-godot` for scene editing, runtime verification, and Web export.
 Read `assets/godot-base/TEMPLATE_SCOPE.md` before changing the template itself.
+Read `references/visual-implementation-patterns.md` when implementing a visual direction from `game-visual-direction` in Godot.
+Read `references/godot-balance-pattern-examples.md` when applying `gameplay-balance-evaluation` patterns in GDScript.

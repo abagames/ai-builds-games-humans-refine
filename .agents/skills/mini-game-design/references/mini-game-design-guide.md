@@ -128,7 +128,7 @@ When contradicting tags are given, it's an opportunity for invention, not a cons
 
 ## 9. Output Format
 
-Output in the following format to the project's game design document, e.g. `tmp/games/<slug>/README.md` in this repository.
+Output in the following format to the project's game design document.
 
 ```markdown
 # <GAME_NAME> (<slug>)
@@ -139,7 +139,7 @@ Output in the following format to the project's game design document, e.g. `tmp/
 - Visual (2): #v_tag1, #v_tag2
 - Structure (1): #s_tag1
 - button_types: <1-5>
-- Unexpected pair check: `<pair_a> + <pair_b>` is not in `data/tags/obvious_pairs.json`
+- Unexpected pair check: `<pair_a> + <pair_b>` satisfies the project's novelty or non-obviousness rule
 
 ## 0.5 State Model (minimal)
 
@@ -155,7 +155,7 @@ Notes:
 ## 1. Core Mechanics
 
 <Input → Behavior → End condition, scoring system, difficulty increase mechanism>
-<difficulty variable convention: initial value 1, +1 per elapsed minute — see `.agents/skills/gameplay-balance-evaluation/references/balance-patterns.md` §1>
+<difficulty variable convention: define initial value, growth cadence, and expected range>
 
 ## 1.5 Tradeoff Definition
 

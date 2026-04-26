@@ -5,7 +5,7 @@ The purpose is structural improvement of rules, generation logic, and state tran
 
 ## Important: Canonical Guardrails
 
-When this reference is used inside a repository with an `AGENTS.md`, that file remains the source of truth for project-specific execution rules. This reference covers reusable improvement analysis and implementation patterns.
+Project-specific execution rules remain outside this reference. This reference covers reusable improvement analysis and implementation patterns.
 
 Notes:
 
@@ -71,7 +71,7 @@ Typical causes:
 - High-speed entry without telegraph
 - Insufficient failure-recovery design such as i-frames/knockback
 
-Related balance patterns: `balance-patterns.md` §1.1 (sqrt transform), §3.1/3.3 (boundary handling), §6.1 (safe distance)
+Related balance patterns: `balance-patterns.md` difficulty scaling, boundary/failure, and spawn safety patterns.
 
 ### 3.2 Spawn Analysis
 
@@ -87,7 +87,7 @@ Typical causes:
 - Pure random spawning without spatial-cell management
 - Constraint release during difficulty increase is too abrupt
 
-Related balance patterns: `balance-patterns.md` §1.3 (inverse spawn interval), §6.2-6.4 (spawn control)
+Related balance patterns: `balance-patterns.md` spawn interval floor, safety distance, cell cooldown, and adaptive spawn patterns.
 
 ### 3.3 Scoring Analysis
 
@@ -104,7 +104,7 @@ Typical causes:
 - No risk-linked multiplier
 - Insufficient per-phase reward redesign
 
-Related balance patterns: `balance-patterns.md` §2.1 (risk-link), §2.3/2.4 (combo), §8.1 (timing window)
+Related balance patterns: `balance-patterns.md` risk-based scoring, combo reset, and placement/timing quality patterns.
 
 ### 3.4 Input Analysis
 
@@ -120,7 +120,7 @@ Typical causes:
 - No context dependency in action selection
 - Player state machine is too simple
 
-Related balance patterns: `balance-patterns.md` §4.3 (miss penalty), §5.1-5.3 (input response), §9.1/9.3 (state management)
+Related balance patterns: `balance-patterns.md` input state tradeoff, contextual input semantics, state decay, and multi-resource tension patterns.
 
 ### 3.5 Experience Integrity Gate
 
@@ -141,26 +141,27 @@ Symptoms:
 
 Insufficient response:
 
-```gdscript
-# ❌ Only lower speed
-enemy_speed *= 0.8
+```text
+# Insufficient: only lower speed
+hazard_speed = hazard_speed * 0.8
 ```
 
 Recommended response:
 
-```gdscript
-# ✅ Spawn checks that guarantee an escape route
-func spawn_enemy() -> void:
-    for _i in range(8):
-        var p := _random_spawn_point()
-        if _has_escape_route(p):
-            _commit_spawn(p)
-            return
-    # Skip spawn on failure to prevent unfair death
+```text
+# Better: spawn checks that preserve an escape route
+spawn_hazard:
+  repeat up to N candidates:
+    candidate = random_spawn_point()
+    if has_escape_route(candidate, player_position, player_radius):
+      commit_spawn(candidate)
+      stop
+  if no candidate is fair:
+    skip_or_delay_spawn
 
-func _has_escape_route(spawn_pos: Vector2) -> bool:
-    var min_clearance := player_radius * 3.0
-    return spawn_pos.distance_to(player.global_position) >= min_clearance
+has_escape_route(candidate, player_position, player_radius):
+  minimum_clearance = player_radius * 3
+  return distance(candidate, player_position) >= minimum_clearance
 ```
 
 ### 4.2 Monotonous Input Dominance
@@ -171,28 +172,27 @@ Symptoms:
 
 Insufficient response:
 
-```gdscript
-# ❌ Only add a fixed cooldown
-if action_cooldown > 0.0:
-    return
+```text
+# Insufficient: only add a fixed cooldown
+if action_cooldown > 0:
+  ignore_action
 ```
 
 Recommended response:
 
-```gdscript
-# ✅ Make environment-side behavior also change by input state
-func apply_action_rule(action_mode: String) -> void:
-    match action_mode:
-        "spam":
-            heat += 0.25            # Mashing raises danger
-            score_multiplier = 1.0
-        "rhythm":
-            heat = max(0.0, heat - 0.1)
-            score_multiplier = 1.5  # Reward successful rhythm
-        "hold":
-            charge += 0.2
-            if charge > 1.0:
-                expose_hitbox()     # Holding increases power while also increasing hit risk
+```text
+# Better: environment behavior changes by input state
+apply_action_rule(action_mode):
+  if action_mode is spam:
+    heat += 0.25
+    score_multiplier = 1.0
+  if action_mode is rhythm:
+    heat = max(0, heat - 0.1)
+    score_multiplier = 1.5
+  if action_mode is hold:
+    charge += 0.2
+    if charge exceeds safe_limit:
+      expose_hitbox_or_reduce_mobility
 ```
 
 ### 4.3 Flat Difficulty Curve
@@ -206,35 +206,31 @@ Symptoms:
 
 Insufficient response:
 
-```gdscript
-# ❌ Linear increment only
-difficulty += delta * 0.1
+```text
+# Insufficient: linear increment only
+difficulty += elapsed_delta * constant
 ```
 
 Recommended response:
 
-```gdscript
-# ✅ Add rules via phase transitions
-func update_phase(elapsed_sec: float) -> void:
-    if elapsed_sec < 20.0:
-        phase = 0
-    elif elapsed_sec < 45.0:
-        phase = 1
-    else:
-        phase = 2
+```text
+# Better: add readable phase transitions
+update_phase(elapsed_seconds):
+  if elapsed_seconds < early_limit: phase = early
+  else if elapsed_seconds < mid_limit: phase = middle
+  else: phase = late
 
-func apply_phase_rules() -> void:
-    match phase:
-        0:
-            enable_homing = false
-            warning_time = 0.35
-        1:
-            enable_homing = true
-            warning_time = 0.25
-        2:
-            enable_homing = true
-            enable_near_miss_bonus = true
-            warning_time = 0.20
+apply_phase_rules:
+  early:
+    complex_hazard = off
+    warning_time = generous
+  middle:
+    complex_hazard = on
+    warning_time = moderate
+  late:
+    complex_hazard = on
+    mastery_bonus = on
+    warning_time = short_but_reactable
 ```
 
 ### 4.4 Spatial Distribution Bias
@@ -246,25 +242,22 @@ Symptoms:
 
 Recommended response:
 
-```gdscript
-# ✅ Spawn with cell cooldown
-var last_spawn_tick_by_cell: Dictionary = {}
-const CELL_COOLDOWN := 45
+```text
+# Better: spawn with cell cooldown
+last_spawn_time_by_cell = {}
+cell_cooldown = fixed_reaction_window
 
-func choose_spawn_cell(cells: Array, tick: int) -> int:
-    var best_idx := -1
-    var best_score := -INF
-    for i in range(cells.size()):
-        var id: String = cells[i].id
-        var last_tick: int = int(last_spawn_tick_by_cell.get(id, -100000))
-        var cooldown_ok := tick - last_tick >= CELL_COOLDOWN
-        if not cooldown_ok:
-            continue
-        var score := cells[i].distance_from_player
-        if score > best_score:
-            best_score = score
-            best_idx = i
-    return best_idx
+choose_spawn_cell(cells, now):
+  best_cell = none
+  best_score = negative_infinity
+  for each cell:
+    if now - last_spawn_time_by_cell[cell.id] < cell_cooldown:
+      continue
+    score = distance_from_player(cell) + route_fairness(cell)
+    if score > best_score:
+      best_score = score
+      best_cell = cell
+  return best_cell
 ```
 
 ## 5. Improvement Process
@@ -317,44 +310,34 @@ Treat generated screenshots or state summaries as **state-consistency evidence**
 
 #### Minimal Implementation Pattern
 
-Provide an image-generation or state-summary API callable from tests. The example below uses GDScript-style pseudocode, but the contract is engine-neutral.
+Provide an image-generation or state-summary API callable from tests.
 
-```gdscript
-# main.gd
-func capture_debug_frame(path: String) -> void:
-    var img := Image.create(960, 540, false, Image.FORMAT_RGBA8)
-    img.fill(Color8(10, 18, 32, 255)) # background
-
-    var snap: Dictionary = world_system.get_capture_snapshot()
-    for hazard in snap.get("hazards", []):
-        var x := int((hazard as Dictionary).get("x", 0.0))
-        var y := int((hazard as Dictionary).get("y", 0.0))
-        var w := int((hazard as Dictionary).get("w", 16.0))
-        var h := int((hazard as Dictionary).get("h", 16.0))
-        img.fill_rect(Rect2i(x, y, w, h), Color8(211, 77, 91, 255))
-
-    var p := player.get_debug_position()
-    img.fill_rect(Rect2i(int(p.x) - 4, int(p.y) - 4, 8, 8), Color8(255, 242, 209, 255))
-    img.save_png(path)
+```text
+capture_debug_frame(path):
+  snapshot = world.get_capture_snapshot()
+  image = create_blank_image(render_width, render_height, background_color)
+  for each hazard in snapshot.hazards:
+    draw_rect(image, hazard.bounds, hazard_debug_color)
+  draw_player_marker(image, snapshot.player_position)
+  save_image(image, path)
 ```
 
 Invoke from the automated test harness under fixed-scene conditions.
 
-```gdscript
+```text
 # test harness pseudocode
-func _capture_screenshots(game: Node) -> void:
-    game.force_reset_for_test(3001) # Scene A: low density
-    _step_for_scene_a(game)
-    game.capture_debug_frame("res://logs/screens/scene_a.png")
+capture_state_summaries(game):
+  game.reset(seed_for_low_density)
+  step_until_low_density_condition(game)
+  game.capture_debug_frame("logs/screens/scene_a.png")
 
-    game.force_reset_for_test(3002) # Scene B: high density
-    game.set_wave_for_test(8)
-    _step_for_scene_b(game)
-    game.capture_debug_frame("res://logs/screens/scene_b.png")
+  game.reset(seed_for_high_density)
+  step_until_high_density_condition(game)
+  game.capture_debug_frame("logs/screens/scene_b.png")
 
-    game.force_reset_for_test(3003) # Scene C: near failure
-    _step_until_near_failure(game)
-    game.capture_debug_frame("res://logs/screens/scene_c.png")
+  game.reset(seed_for_near_failure)
+  step_until_near_failure_condition(game)
+  game.capture_debug_frame("logs/screens/scene_c.png")
 ```
 
 Fallback rules:
@@ -395,22 +378,22 @@ If any of the following is `No`, fail even if exploratory ratio is high.
 
 ### ❌ Parameter-Only Fix
 
-```gdscript
+```text
 enemy_speed *= 0.8
 spawn_interval += 0.2
 ```
 
 ### ❌ Branch-Only Fix
 
-```gdscript
+```text
 if too_hard:
-    make_easier()
+  make_easier()
 ```
 
 ### ❌ Randomness Creep
 
-```gdscript
-spawn_pos.y += randf_range(-80.0, 80.0)
+```text
+spawn_position.y += random_range(-80, 80)
 ```
 
 ### ❌ UI-Only Compensation
@@ -420,14 +403,14 @@ spawn_pos.y += randf_range(-80.0, 80.0)
 
 ### ❌ KPI Gaming
 
-```gdscript
+```text
 # Awarding points for raw input facts (prohibited)
 if input_pressed:
-    score += 1
+  score += 1
 
 # Instant game over for non-movement fact alone (prohibited)
 if idle_time > 1.5:
-    trigger_game_over()
+  trigger_game_over()
 ```
 
 ## 8. Recommended Change Set Template

@@ -1,6 +1,6 @@
 # Visual Design Guide
 
-A guide for designing the visual layer of action mini-games using visual tags as creative seeds. Parallel to `.agents/skills/mini-game-design/references/mini-game-design-guide.md` (which covers mechanics), this document covers screen composition, rendering style, feedback effects, and visual coherence.
+A guide for designing the visual layer of action mini-games using visual tags as creative seeds. Parallel to the `mini-game-design` skill (which covers mechanics), this document covers screen composition, rendering style, feedback effects, and visual coherence.
 
 ## 1. Design Challenges
 
@@ -33,7 +33,7 @@ A guide for designing the visual layer of action mini-games using visual tags as
 
 ## 3. Role of Visual Tags
 
-Visual tags follow the same philosophy as mechanism tags (see `.agents/skills/mini-game-design/references/mini-game-design-guide.md` §5):
+Visual tags follow the same philosophy as mechanism tags from the `mini-game-design` skill:
 
 - **Stimulus, not constraint**: Tags suggest a visual direction; the final design may depart from them.
 - **Contradiction is opportunity**: Conflicting tags create unique visual identities (see §7).
@@ -55,7 +55,7 @@ Visual tags follow the same philosophy as mechanism tags (see `.agents/skills/mi
 | `typography-*` | Text integration | How scores, labels, and glyphs exist in the game world |
 | `composition-*` | Screen layout | Spatial organization, negative space, visual hierarchy |
 
-> Note: Typography implementation and font licensing policy (including Web export redistribution) is defined in `.agents/skills/godot-web-typography/references/typography-implementation-guide.md`.
+> Note: Typography implementation and font licensing policy belongs in the engine/platform-specific typography skill for the target project.
 
 ### 4.2 Category Interaction Map
 
@@ -168,180 +168,16 @@ When producing a visual design document, include the following section template 
 - Anti-center-clutter implementation:
 ```
 
-## 8. Godot Implementation Patterns
+## 8. Implementation Handoff
 
-The patterns below are **starter examples**, not an exhaustive catalog. Combine, modify, and invent new effects per game. Reusing the same set across games produces visual monotony.
+This guide defines visual direction and feedback semantics, not engine implementation.
+After choosing an engine, translate the visual plan into that engine's rendering primitives.
 
-### 8.1 Rendering Approaches
-
-| Visual Tag Category | Godot Implementation |
-|:---|:---|
-| `render-*` (outlines, strokes) | `_draw()` with `draw_arc()`, `draw_polyline()`, `draw_line()` |
-| `render-*` (glow, bloom) | `WorldEnvironment` + `Environment.glow_enabled` or `ShaderMaterial` |
-| `geometry-*` | `_draw()` primitives, or `Polygon2D` nodes |
-| `motionviz-*` | GDScript logic in `_process()` + `_draw()`, or `GPUParticles2D` |
-| `background-*` | `ParallaxBackground` + `ShaderMaterial` for procedural effects |
-| `lighting-*` | `PointLight2D`, `CanvasModulate`, or shader-based post-processing |
-| `analog-*` | `ShaderMaterial` on `CanvasLayer` for screen-space effects |
-| `typography-*` | `Label` / `RichTextLabel` with custom fonts, or `_draw()` for glyphs as geometry |
-| `composition-*` | Layout through node positioning, `Camera2D` framing, `Marker2D` guides |
-
-### 8.2 Common Shader Patterns
-
-```gdscript
-# Chromatic offset (analog-chromatic-offset)
-shader_type canvas_item;
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
-uniform float offset_amount : hint_range(0.0, 5.0) = 1.5;
-
-void fragment() {
-    vec2 uv = SCREEN_UV;
-    float r = texture(screen_texture, uv + vec2(offset_amount / 1000.0, 0.0)).r;
-    float g = texture(screen_texture, uv).g;
-    float b = texture(screen_texture, uv - vec2(offset_amount / 1000.0, 0.0)).b;
-    COLOR = vec4(r, g, b, 1.0);
-}
-```
-
-```gdscript
-# Noise field background (background-noise-field)
-shader_type canvas_item;
-uniform float time_scale : hint_range(0.1, 5.0) = 1.0;
-uniform float grain_intensity : hint_range(0.0, 1.0) = 0.15;
-
-void fragment() {
-    float noise = fract(sin(dot(UV + TIME * time_scale, vec2(12.9898, 78.233))) * 43758.5453);
-    COLOR = vec4(vec3(noise * grain_intensity), 1.0);
-}
-```
-
-### 8.3 Particle and Trail Patterns
-
-```gdscript
-# Impact ripple (motionviz-impact-ripple)
-class RippleEffect extends Node2D:
-    var radius: float = 0.0
-    var max_radius: float = 60.0
-    var lifetime: float = 0.4
-    var age: float = 0.0
-    var color: Color = Color.CYAN
-
-    func _process(delta):
-        age += delta
-        radius = max_radius * (age / lifetime)
-        if age >= lifetime:
-            queue_free()
-        queue_redraw()
-
-    func _draw():
-        var alpha = 1.0 - (age / lifetime)
-        draw_arc(Vector2.ZERO, radius, 0, TAU, 64, Color(color, alpha), 2.0)
-```
-
-```gdscript
-# Afterimage trail (motionviz-afterimage-trail)
-var trail_positions: Array[Vector2] = []
-const TRAIL_LENGTH = 8
-
-func _process(delta):
-    trail_positions.push_front(global_position)
-    if trail_positions.size() > TRAIL_LENGTH:
-        trail_positions.resize(TRAIL_LENGTH)
-    queue_redraw()
-
-func _draw():
-    for i in range(trail_positions.size()):
-        var alpha = 1.0 - float(i) / TRAIL_LENGTH
-        var size = base_size * (1.0 - float(i) / TRAIL_LENGTH * 0.5)
-        draw_circle(to_local(trail_positions[i]), size, Color(color, alpha * 0.4))
-```
-
-### 8.4 Dynamic Background Patterns
-
-```gdscript
-# Flow lines (background-flow-lines)
-var flow_particles: Array[Dictionary] = []
-
-func _ready():
-    for i in range(40):
-        flow_particles.append({
-            "pos": Vector2(randf() * get_viewport_rect().size.x,
-                          randf() * get_viewport_rect().size.y),
-            "speed": randf_range(20.0, 60.0),
-            "length": randf_range(10.0, 30.0),
-        })
-
-func _process(delta):
-    for p in flow_particles:
-        p.pos.x += p.speed * delta
-        if p.pos.x > get_viewport_rect().size.x + p.length:
-            p.pos.x = -p.length
-            p.pos.y = randf() * get_viewport_rect().size.y
-    queue_redraw()
-
-func _draw():
-    for p in flow_particles:
-        var end = p.pos + Vector2(p.length, 0)
-        draw_line(p.pos, end, Color(1, 1, 1, 0.1), 1.0)
-```
-
-### 8.5 Screen-Space Effect Patterns
-
-```gdscript
-# Screen shake (feedback on damage/impact)
-var shake_intensity := 0.0
-var shake_decay := 5.0
-
-func trigger_shake(intensity: float) -> void:
-    shake_intensity = intensity
-
-func _process(delta: float) -> void:
-    if shake_intensity > 0.1:
-        offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * shake_intensity
-        shake_intensity = lerpf(shake_intensity, 0.0, shake_decay * delta)
-    else:
-        offset = Vector2.ZERO
-        shake_intensity = 0.0
-```
-
-```gdscript
-# Pulse/breathe animation (dynamic life for any object)
-var base_scale := Vector2.ONE
-var pulse_speed := 2.0
-var pulse_amount := 0.05
-
-func _process(delta: float) -> void:
-    var t := sin(Time.get_ticks_msec() / 1000.0 * pulse_speed) * pulse_amount
-    scale = base_scale * (1.0 + t)
-```
-
-### 8.6 Color and State Transition Patterns
-
-```gdscript
-# Smooth palette shift on state change
-var target_color := Color.WHITE
-var current_color := Color.WHITE
-const COLOR_LERP_SPEED := 4.0
-
-func set_state_color(new_color: Color) -> void:
-    target_color = new_color
-
-func _process(delta: float) -> void:
-    current_color = current_color.lerp(target_color, COLOR_LERP_SPEED * delta)
-    modulate = current_color
-```
-
-```gdscript
-# Flash on hit (brief brightness spike then restore)
-func flash_hit() -> void:
-    modulate = Color(3.0, 3.0, 3.0, 1.0)  # HDR white
-    var tween := create_tween()
-    tween.tween_property(self, "modulate", Color.WHITE, 0.15)
-```
+Engine-specific implementation examples belong in engine-specific skills or project references, not in this visual-direction guide.
 
 ## 9. Output Format
 
-Output in the following format to the project's visual design document, e.g. `tmp/games/<slug>/VISUAL_DESIGN.md` in this repository.
+Output in the following format to the project's visual design document.
 
 ```markdown
 # Visual Design: <GAME_NAME>
