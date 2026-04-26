@@ -1,4 +1,6 @@
 tmp/
+.claude/
+.codex
 
 # Shared ignores for publishable docs games.
 docs/games/**/.godot/

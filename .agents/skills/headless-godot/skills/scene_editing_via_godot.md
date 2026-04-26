@@ -6,9 +6,10 @@ Goal:
 One-way flow:
 - `patch.json` (reviewable) -> `godot_apply_patch.gd` (apply) -> save `.tscn`
 
-Standard patch command:
+Standard patch commands:
 ```bash
-mkdir -p logs && godot --headless --path <PROJECT_DIR> --script res://tools/godot_apply_patch.gd -- <PATCH_JSON_PATH> 2>&1 | tee logs/patch.log
+mkdir -p logs && godot --headless --path <PROJECT_DIR> --script res://tools/godot_apply_patch.gd -- <PATCH_JSON_PATH> --dry-run 2>&1 | tee logs/patch_dry_run.log
+mkdir -p logs && godot --headless --path <PROJECT_DIR> --script res://tools/godot_apply_patch.gd -- <PATCH_JSON_PATH> 2>&1 | tee logs/patch_apply.log
 ```
 
 Patch input requirements:

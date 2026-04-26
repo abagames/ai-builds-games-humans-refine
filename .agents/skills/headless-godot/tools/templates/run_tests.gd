@@ -3,7 +3,10 @@ extends SceneTree
 var _failures := 0
 
 func _init() -> void:
-	# Replace these placeholders with project-specific checks.
+	call_deferred("_run")
+
+func _run() -> void:
+	# Replace this placeholder with project-specific logic tests.
 	_assert_true(true, "replace with a real test")
 
 	if _failures > 0:
