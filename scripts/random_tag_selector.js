@@ -202,9 +202,9 @@ function getTagType(filePath) {
 function getGuideReference(tagType) {
   switch (tagType) {
     case "mechanism":
-      return ".agents/skills/mini-game-design/references/mini-game-design-guide.md §7";
+      return ".agents/skills/designing-mini-games/references/mini-game-design-guide.md §7";
     case "visual":
-      return ".agents/skills/game-visual-direction/references/visual-design-guide.md §5";
+      return ".agents/skills/directing-game-visuals/references/visual-design-guide.md §5";
     case "structure":
       return "AGENTS.md Phase 2 (Growth skeleton / game structure)";
     default:

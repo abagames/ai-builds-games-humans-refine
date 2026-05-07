@@ -55,15 +55,15 @@ If `button_types` must also be reproducible, use the same `-s <number>` and a se
 
 ## Phase 2: Game Design
 
-**Skill**: `mini-game-design`
-**Reference**: `.agents/skills/mini-game-design/references/mini-game-design-guide.md`
+**Skill**: `designing-mini-games`
+**Reference**: `.agents/skills/designing-mini-games/references/mini-game-design-guide.md`
 
 Design game rules using mechanic tags as seeds.
 
 1. Free-association and deliberate deviation from tags
 2. Define the core experience in one sentence
 3. Design controls (within `button_types` chosen in Phase 1)
-4. Validate via checklist (`.agents/skills/mini-game-design/references/mini-game-design-guide.md` §10)
+4. Validate via checklist (`.agents/skills/designing-mini-games/references/mini-game-design-guide.md` §10)
 
 **Output**: `tmp/games/<slug>/README.md` (core mechanics, controls, object specs, novelty rationale, tag log, state-variable table, tradeoff explanation)
 
@@ -77,8 +77,8 @@ Design game rules using mechanic tags as seeds.
 
 ## Phase 3: Visual Design
 
-**Skill**: `game-visual-direction`
-**Reference**: `.agents/skills/game-visual-direction/references/visual-design-guide.md`
+**Skill**: `directing-game-visuals`
+**Reference**: `.agents/skills/directing-game-visuals/references/visual-design-guide.md`
 
 Design the screen using visual tags as seeds.
 
@@ -93,26 +93,26 @@ Design the screen using visual tags as seeds.
 - Feedback design that does not rely on UI text
 - Composition rules (gaze guidance and center-clutter avoidance)
 
-6. Validate via checklist (`.agents/skills/game-visual-direction/references/visual-design-guide.md` §10)
+6. Validate via checklist (`.agents/skills/directing-game-visuals/references/visual-design-guide.md` §10)
 
 **Output**: `tmp/games/<slug>/VISUAL_DESIGN.md` (concept, palette, rendering specs, effect design)
-Use `.agents/skills/game-visual-direction/references/visual-design-guide.md` §7.1 (`VISUAL_DESIGN.md Required Addendum Template`) for required addendum text.
+Use `.agents/skills/directing-game-visuals/references/visual-design-guide.md` §7.1 (`VISUAL_DESIGN.md Required Addendum Template`) for required addendum text.
 
 ## Phase 4: Sound Design
 
-**Skill**: `godot-procedural-audio`
-**Reference**: `.agents/skills/godot-procedural-audio/references/sound-design-guide.md`
+**Skill**: `creating-godot-procedural-audio`
+**Reference**: `.agents/skills/creating-godot-procedural-audio/references/sound-design-guide.md`
 
 Use visual tags as input to define SFX direction. Do not choose separate sound tags.
 All SFX must be generated procedurally with Godot `AudioStreamGenerator`; no external audio files.
 
-1. Derive sound style from visual tags (`.agents/skills/godot-procedural-audio/references/sound-design-guide.md` §3 mapping table)
+1. Derive sound style from visual tags (`.agents/skills/creating-godot-procedural-audio/references/sound-design-guide.md` §3 mapping table)
 2. Define one-sentence sound concept
 3. Select waveform palette (1-2 base waveforms + modulation method)
-4. Design SFX per game event (`.agents/skills/godot-procedural-audio/references/sound-design-guide.md` §4)
+4. Design SFX per game event (`.agents/skills/creating-godot-procedural-audio/references/sound-design-guide.md` §4)
 5. Define dynamic parameters (combo/speed/difficulty linkage)
 6. For continuous sounds, specify start condition, stop condition, and release on stop (allowed reverb tail)
-7. Validate via checklist (`.agents/skills/godot-procedural-audio/references/sound-design-guide.md` §8)
+7. Validate via checklist (`.agents/skills/creating-godot-procedural-audio/references/sound-design-guide.md` §8)
 8. Lock event-to-timbre mapping for `score / danger / damage / state change` within a game
 9. Vary timbre design per game (waveform, pitch range, envelope, modulation, rhythm)
 
@@ -122,18 +122,21 @@ All SFX must be generated procedurally with Godot `AudioStreamGenerator`; no ext
 
 ## Phase 5: Godot Implementation
 
-**Skills**: `godot-mini-game-template`, `headless-godot` (load before implementation)
+**Skills**: `scaffolding-godot-mini-games`, `running-headless-godot` (load before implementation)
 
 Create the Godot project based on Phase 2/3/4 design docs.
 Initialization must start from template.
 
 ```bash
-cp -r .agents/skills/godot-mini-game-template/assets/godot-base/ tmp/games/<slug>/
+PROJECT_DIR=tmp/games/<slug>
+mkdir -p "$PROJECT_DIR"
+cp -R .agents/skills/scaffolding-godot-mini-games/assets/godot-base/. "$PROJECT_DIR"/
+mkdir -p "$PROJECT_DIR/logs" "$PROJECT_DIR/build/web"
 ```
 
 Template default resolution is `960x540`. If changing resolution, update `project.godot`, `web/custom_shell.html`, and `export_presets.cfg` together.
 
-Template scope is documented in `.agents/skills/godot-mini-game-template/assets/godot-base/TEMPLATE_SCOPE.md`.
+Template scope is documented in `.agents/skills/scaffolding-godot-mini-games/assets/godot-base/TEMPLATE_SCOPE.md`.
 
 ### Implementation Constraints
 
@@ -216,9 +219,9 @@ Do not merge all documents into one file; use `README.md` as the index page.
 
 ### Typography Implementation
 
-**Skill**: `godot-web-typography`
+**Skill**: `styling-web-game-typography`
 
-Apply rules from `.agents/skills/godot-web-typography/references/typography-implementation-guide.md`:
+Apply rules from `.agents/skills/styling-web-game-typography/references/typography-implementation-guide.md`:
 
 - Centralize font/color/size with `Theme` (minimize per-node overrides)
 - Split display roles into `Heading / Info / Numeric / Emphasis`
@@ -239,10 +242,10 @@ Evaluate implemented game via manual play and/or headless execution.
 
 ```bash
 PROJECT_DIR="$(pwd)/tmp/games/<slug>" && \
-mkdir -p "$PROJECT_DIR"/.tmp-godot-data "$PROJECT_DIR"/.tmp-godot-config "$PROJECT_DIR"/.tmp-godot-cache "$PROJECT_DIR"/logs && \
-XDG_DATA_HOME="$PROJECT_DIR/.tmp-godot-data" \
-XDG_CONFIG_HOME="$PROJECT_DIR/.tmp-godot-config" \
-XDG_CACHE_HOME="$PROJECT_DIR/.tmp-godot-cache" \
+mkdir -p "$PROJECT_DIR"/.godot-xdg/data "$PROJECT_DIR"/.godot-xdg/config "$PROJECT_DIR"/.godot-xdg/cache "$PROJECT_DIR"/logs && \
+XDG_DATA_HOME="$PROJECT_DIR/.godot-xdg/data" \
+XDG_CONFIG_HOME="$PROJECT_DIR/.godot-xdg/config" \
+XDG_CACHE_HOME="$PROJECT_DIR/.godot-xdg/cache" \
 godot --headless --path "$PROJECT_DIR" --script res://tools/tests/run_tests.gd 2>&1 | tee "$PROJECT_DIR/logs/test.log"
 ```
 
@@ -324,12 +327,12 @@ Per evaluation, choose 2-3 operators and vary combinations across proposals.
 
 ### Mechanics Improvement
 
-**Skill**: `gameplay-balance-evaluation`
-**Reference**: `.agents/skills/gameplay-balance-evaluation/references/improvement-analysis.md`, `.agents/skills/gameplay-balance-evaluation/references/balance-patterns.md`
+**Skill**: `evaluating-gameplay-balance`
+**Reference**: `.agents/skills/evaluating-gameplay-balance/references/improvement-analysis.md`, `.agents/skills/evaluating-gameplay-balance/references/balance-patterns.md`
 
 - Identify root causes (logic changes, not mere numeric tuning)
-- Apply/compare patterns from `.agents/skills/gameplay-balance-evaluation/references/balance-patterns.md` in candidate options
-- For later Godot implementation in Phase 8, consult `.agents/skills/godot-mini-game-template/references/godot-balance-pattern-examples.md` after choosing an engine-neutral pattern.
+- Apply/compare patterns from `.agents/skills/evaluating-gameplay-balance/references/balance-patterns.md` in candidate options
+- For later Godot implementation in Phase 8, consult `.agents/skills/scaffolding-godot-mini-games/references/godot-balance-pattern-examples.md` after choosing an engine-neutral pattern.
 - Treat "state variables requiring explanation" as reduction targets and integrate into world-side behavior
 - Improvement report must record: "3 presented options", "adoption-candidate rationale", and "rejection rationale"
 - Implement only after humans choose an option in Phase 8
@@ -367,7 +370,7 @@ Optional phase where humans view/play Web export and iterate improvements throug
 - After modifications, execute Web export
 - Iterative dialogue can continue for as many rounds as needed
 - Full typography execution (font comparison/adoption/bundling/license reflection) should generally happen here
-- For typography implementation, follow `.agents/skills/godot-web-typography/references/typography-implementation-guide.md` and update `TYPOGRAPHY_DECISION.md`, `THIRD_PARTY_LICENSES.md`, and `licenses/`
+- For typography implementation, follow `.agents/skills/styling-web-game-typography/references/typography-implementation-guide.md` and update `TYPOGRAPHY_DECISION.md`, `THIRD_PARTY_LICENSES.md`, and `licenses/`
 
 ### Recording (recommended)
 
@@ -432,10 +435,10 @@ Note: Visual/sound/AI-genericness evaluations are added only if Phase 8 is execu
 | `data/tags/structure_tags.csv`              | Structure tags (game skeleton)                | Phase 1          |
 | `data/tags/obvious_pairs.json`              | Obvious-pair definitions (non-obvious check)  | Phase 1          |
 | `scripts/random_tag_selector.js`            | Tag selection script                          | Phase 1          |
-| `.agents/skills/mini-game-design/`          | Mechanics design skill and reference          | Phase 2          |
-| `.agents/skills/game-visual-direction/`     | Visual design skill and reference             | Phase 3          |
-| `.agents/skills/godot-procedural-audio/`    | Procedural audio skill and reference/assets   | Phase 4          |
-| `.agents/skills/godot-mini-game-template/`  | New game initialization template skill        | Phase 5          |
-| `.agents/skills/headless-godot/`            | Godot headless operation skill                | Phase 5-6        |
-| `.agents/skills/godot-web-typography/`      | Typography implementation/license skill       | Phase 5/8        |
-| `.agents/skills/gameplay-balance-evaluation/` | Balance analysis and improvement skill      | Phase 7          |
+| `.agents/skills/designing-mini-games/`      | Mechanics design skill and reference          | Phase 2          |
+| `.agents/skills/directing-game-visuals/`    | Visual design skill and reference             | Phase 3          |
+| `.agents/skills/creating-godot-procedural-audio/` | Procedural audio skill and reference/assets | Phase 4          |
+| `.agents/skills/scaffolding-godot-mini-games/` | New game initialization template skill     | Phase 5          |
+| `.agents/skills/running-headless-godot/`    | Godot headless operation skill                | Phase 5-6        |
+| `.agents/skills/styling-web-game-typography/` | Typography implementation/license skill     | Phase 5/8        |
+| `.agents/skills/evaluating-gameplay-balance/` | Balance analysis and improvement skill      | Phase 7          |
