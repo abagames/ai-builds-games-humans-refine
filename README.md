@@ -27,7 +27,7 @@ This project is a human-in-the-loop mini-game workshop:
 
 ## Workflow Overview
 
-`AGENTS.md` defines an 8-phase workflow for generating and refining a mini-game:
+`AGENTS.md` defines a 9-phase workflow for generating and refining a mini-game:
 
 1. Phase 1: Randomly choose mechanic, visual, and structure tags, plus the number of button types.
 2. Phase 2: Turn those tags into a concrete game design with rules, controls, and state definitions.
@@ -37,3 +37,4 @@ This project is a human-in-the-loop mini-game workshop:
 6. Phase 6: Run headless tests and evaluate whether skillful play beats monotonous input.
 7. Phase 7: Write an evaluation report with multiple improvement options, without changing the implementation.
 8. Phase 8: Apply human feedback, re-test, and export the updated game for further iteration.
+9. Phase 9: On explicit human request, publish the approved game to `docs/games/` for GitHub Pages.

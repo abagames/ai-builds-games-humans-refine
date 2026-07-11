@@ -20,6 +20,7 @@ Entry point for AI agents to automatically design, implement, and improve mini-g
 
 Execute Phases 1–8 in order.
 Phase 7 is evaluation-report only (no implementation changes). Implementation changes are allowed only in Phase 8 from human feedback.
+Phase 9 (publication) is executed only on an explicit human request, never automatically.
 Each phase below lists required files and commands.
 
 If you modify the game based on human instructions, you must run through Web export.
@@ -29,18 +30,17 @@ If you modify the game based on human instructions, you must run through Web exp
 ## Phase 1: Tag Selection
 
 Randomly select 3 mechanic tags, 2 visual tags, and 1 structure tag.
-Mechanic tags must satisfy at least one non-obvious pair based on `data/tags/obvious_pairs.json`.
+The mechanic tag selection must not contain any obvious pair listed in `data/tags/obvious_pairs.json`.
 Also choose a random integer `button_types` from `1-5`.
 
 ```bash
-node scripts/random_tag_selector.js --file data/tags/mechanism_tags.csv -n 3 --require-unexpected-pair --obvious-pairs data/tags/obvious_pairs.json
+node scripts/random_tag_selector.js --file data/tags/mechanism_tags.csv -n 3 --avoid-obvious-pairs --obvious-pairs data/tags/obvious_pairs.json
 node scripts/random_tag_selector.js --file data/tags/visual_tags.csv -n 2
 node scripts/random_tag_selector.js --file data/tags/structure_tags.csv -n 1
-node -e "console.log(Math.floor(Math.random() * 5) + 1)"  # button_types (1-5)
+node scripts/random_tag_selector.js --button-types  # button_types (1-5)
 ```
 
-To reproduce with the same seed, add `-s <number>`.
-If `button_types` must also be reproducible, use the same `-s <number>` and a seeded random call in `node` to generate the same value.
+To reproduce, add `-s <number>` to each command; this covers tag selection and `--button-types` alike.
 
 **How to treat tags**: Tags are creative seeds, not strict specs. Use contradictory tags as creative tension. Do not fear divergence.
 
@@ -49,7 +49,7 @@ If `button_types` must also be reproducible, use the same `-s <number>` and a se
 - [ ] Selected 1 structure tag from `data/tags/structure_tags.csv`
 - [ ] Recorded `mechanism 3 + visual 2 + structure 1` in `README.md`
 - [ ] Recorded `button_types: <1-5>` in `README.md`
-- [ ] Satisfied `non-obvious pair >= 1` under `data/tags/obvious_pairs.json`
+- [ ] No obvious pair (per `data/tags/obvious_pairs.json`) among selected mechanism tags
 
 ---
 
@@ -61,11 +61,15 @@ If `button_types` must also be reproducible, use the same `-s <number>` and a se
 Design game rules using mechanic tags as seeds.
 
 1. Free-association and deliberate deviation from tags
-2. Define the core experience in one sentence
-3. Design controls (within `button_types` chosen in Phase 1)
-4. Validate via checklist (`.agents/skills/designing-mini-games/references/mini-game-design-guide.md` §10)
+2. Write 2-3 candidate core-experience sentences from the same tag set (no tag redraws between candidates)
+3. Select exactly one candidate: the one that most directly **uses** the tag tension instead of avoiding it (per the guide's §7 principle — invent a concept that makes the contradiction possible). When candidates are otherwise equal, prefer the stranger one. Do not rank candidates by which sounds most plausible or coherent on paper.
+4. Commit all further design depth to the selected candidate only; design controls (within `button_types` chosen in Phase 1)
+5. Produce the LLM-guardrail artifacts of the guide's Appendix A: the causal chain audit (0.6) and the degenerate strategy declaration (0.7). These are mandatory tables, not yes/no checks — writing them forces retrieval of failure knowledge that self-affirming review skips.
+6. Validate via checklist (`.agents/skills/designing-mini-games/references/mini-game-design-guide.md` §9)
 
-**Output**: `tmp/games/<slug>/README.md` (core mechanics, controls, object specs, novelty rationale, tag log, state-variable table, tradeoff explanation)
+**Output**: `tmp/games/<slug>/README.md` (core mechanics, controls, object specs, novelty rationale, tag log, core-experience candidate log — the selected sentence plus each rejected candidate with a one-line rejection reason — state-variable table, causal chain audit, degenerate strategy declaration, tradeoff explanation)
+
+**Slug rule**: `<slug>` must be kebab-case — lowercase letters, digits, and hyphens only (e.g., `warp-chase-holdline`). The same slug is used unchanged when the game is published in Phase 9.
 
 **Visible-Causality Guard (required)**:
 
@@ -253,13 +257,21 @@ If you create `run_tests.gd`, include at least:
 
 - Monotonous input tests (`no_input` / `spam_action` / `hold_action`)
 - Exploratory input tests (random or heuristic, multiple trials)
+- Run monotonous and exploratory policies with the **same number of seeds per policy** (the template uses 8). Never compare a single-seed monotonous baseline against a multi-seed exploratory best; that lets exploratory cherry-pick lucky world seeds and inflates the ratio.
 - Output of `exploratory.best.score` and `monotonous.max_score`
 - Output `logs/test.json` on every run with required minimum fields:
+  - `seed_policy` (seed bases, seeds per policy, variant count)
   - `monotonous.max_score`
   - `exploratory.best.score`
   - `exploratory_ratio`
   - `telemetry.death_analysis / spawn_analysis / scoring_analysis / input_analysis`
+  - `input_sensitivity` (replay the best exploratory run's recorded input stream with ±2/±4-frame shifts on the same seed; report base and shifted scores)
+  - `exploration_policy_exclusions` (per policy, the state-space regions/filters it needed to function; empty arrays allowed but the key must exist)
 - Treat missing required fields as test failure
+- Interpret `input_sensitivity` as a diagnostic, not an auto-fail: near-identical scores under shifts mean input timing is irrelevant (mash-equivalent design); collapse under a ±2-frame shift means outcomes are not player-predictable. Either extreme must be analyzed in Phase 7.
+- Treat systematic `exploration_policy_exclusions` over reachable-looking space (visible targets, usable-looking areas/actions) as an affordance-defect signal: optimal play is routing around something human players will still try, and the LLM must report it instead of silently adapting to it.
+- Treat `monotonous.max_score == 0` as test failure (`exploratory_ratio` is indeterminate; do not substitute a sentinel value)
+- If the game has staged/unlocked content (waves, phases, rule reveals), implement a stage-forcing test hook (e.g., `set_wave_for_test`) plus `run_staged_content_checks()` on `main.gd` so that every stage executes at least once; the template harness records its result under `staged_content_checks` in `logs/test.json`. A stage that never spawns/behaves in any check is a test failure.
 - Auto-update `logs/improvement_report.md` for improvement-history comparison
 
 ### 6b: Mechanics Evaluation (Exploratory Ratio)
@@ -286,6 +298,7 @@ Check:
 - [ ] Button-mashing/idle is not optimal
 - [ ] Skillful play is rewarded
 - [ ] For each added state variable, non-HUD in-world causality is implemented in code
+- [ ] If the game has staged/unlocked content, every stage is exercised at least once via stage-forcing checks (`staged_content_checks` in `logs/test.json`); content the 30-second window never reaches must not go unevaluated
 
 Subjective visual/sound evaluation and UI-hidden comprehension checks are done in Phase 8.
 
@@ -375,6 +388,26 @@ Optional phase where humans view/play Web export and iterate improvements throug
 ### Recording (recommended)
 
 - Add a "Human Feedback" section to `logs/improvement_report.md` with reasons and changes
+
+---
+
+## Phase 9: Publication (Human-Triggered)
+
+Execute only when a human explicitly asks to publish a game. Publication promotes the working game from `tmp/games/<slug>` to `docs/games/<slug>` (served via GitHub Pages).
+
+### Publication Criteria
+
+- A human has played the Web export in Phase 8 and approved publication.
+- The latest Phase 6 run passes runtime/schema checks (`monotonous.max_score > 0`, all required `test.json` fields present, staged-content checks pass if applicable).
+- Record the final `exploratory_ratio` in the game's `README.md`. If it is `<= 1.5` (below the mechanics pass bar), record a one-line human rationale for publishing anyway.
+
+### Steps
+
+1. Re-run Phase 6 tests and Web export on the final implementation.
+2. Copy `tmp/games/<slug>` to `docs/games/<slug>`. Exclude `TEMPLATE_SCOPE.md` (template-internal documentation; it must not ship with a published game). Transient artifacts (`.godot/`, `.godot-xdg/`, `.tmp-godot-*/`, `logs/`, `tools/tests/`, `*.uid`, `*.import`) are filtered by the root `.gitignore`; `build/web/` must be included because it is the playable deliverable linked from the root `README.md`.
+3. Create `docs/games/<slug>/screenshot.gif` (short gameplay capture).
+4. Add the game (Pages link + screenshot) to the root `README.md` Sample Games section.
+5. Keep the slug identical to the development slug (kebab-case rule from Phase 2).
 
 ---
 

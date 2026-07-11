@@ -13,9 +13,9 @@
  *   -n, --count <number>   Number of tags to select (default: 3)
  *   -s, --seed <number>    Random seed (uses current time if omitted)
  *   -f, --format <type>    Output format: text, json, markdown (default: markdown)
- *   --require-unexpected-pair
- *                          Require at least one selected pair not listed in data/tags/obvious_pairs.json
+ *   --avoid-obvious-pairs  Reject selections containing any pair listed in data/tags/obvious_pairs.json
  *   --obvious-pairs <path> JSON file defining obvious tag pairs (default: data/tags/obvious_pairs.json)
+ *   --button-types         Output a seeded random button_types value (1-5) instead of tags
  *   -h, --help             Show help
  */
 
@@ -53,6 +53,16 @@ class Xorshift128 {
     }
     return result;
   }
+}
+
+// Integer hash (lowbias32). Xorshift128 seeds its state from the raw seed
+// word, so small or adjacent seeds produce correlated first draws; a single
+// nextInt() call (the --button-types path) needs the seed diffused first.
+function hashSeed(seed) {
+  let h = seed >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x21f0aaad);
+  h = Math.imul(h ^ (h >>> 15), 0x735a2d97);
+  return (h ^ (h >>> 15)) >>> 0;
 }
 
 // CSV parse (handles quoted fields)
@@ -160,22 +170,22 @@ function loadObviousPairs(filePath) {
   return set;
 }
 
-function getUnexpectedPairs(selectedTags, obviousPairs) {
+function getObviousPairsIn(selectedTags, obviousPairs) {
   const allPairs = buildPairList(selectedTags);
-  return allPairs.filter((pair) => !obviousPairs.has(pair.key));
+  return allPairs.filter((pair) => obviousPairs.has(pair.key));
 }
 
-function selectTagsWithConstraint(tags, count, rng, obviousPairs) {
+function selectTagsAvoidingObviousPairs(tags, count, rng, obviousPairs) {
   const maxAttempts = 200;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const selected = selectTags(tags, count, rng);
-    if (count < 2 || getUnexpectedPairs(selected, obviousPairs).length > 0) {
+    if (getObviousPairsIn(selected, obviousPairs).length === 0) {
       return selected;
     }
   }
 
   console.error(
-    "Error: Could not satisfy --require-unexpected-pair with current tag pool and obvious pair definitions."
+    "Error: Could not satisfy --avoid-obvious-pairs with current tag pool and obvious pair definitions."
   );
   process.exit(1);
 }
@@ -202,7 +212,7 @@ function getTagType(filePath) {
 function getGuideReference(tagType) {
   switch (tagType) {
     case "mechanism":
-      return ".agents/skills/designing-mini-games/references/mini-game-design-guide.md §7";
+      return ".agents/skills/designing-mini-games/SKILL.md (Design Procedure) and references/mini-game-design-guide.md §5";
     case "visual":
       return ".agents/skills/directing-game-visuals/references/visual-design-guide.md §5";
     case "structure":
@@ -297,16 +307,17 @@ Options:
   -n, --count <number>   Number of tags to select (default: 3)
   -s, --seed <number>    Random seed (uses current time if omitted)
   -f, --format <type>    Output format: text, json, markdown (default: markdown)
-  --require-unexpected-pair
-                         Require at least one selected pair not listed in data/tags/obvious_pairs.json
+  --avoid-obvious-pairs  Reject selections containing any pair listed in data/tags/obvious_pairs.json
   --obvious-pairs <path> JSON file defining obvious pairs (default: data/tags/obvious_pairs.json)
+  --button-types         Output a seeded random button_types value (1-5) instead of tags
   -h, --help             Show this help
 
 Examples:
   node scripts/random_tag_selector.js
   node scripts/random_tag_selector.js --file data/tags/visual_tags.csv -n 2
   node scripts/random_tag_selector.js --file data/tags/mechanism_tags.csv -n 3 -s 42
-  node scripts/random_tag_selector.js --file data/tags/mechanism_tags.csv -n 3 --require-unexpected-pair
+  node scripts/random_tag_selector.js --file data/tags/mechanism_tags.csv -n 3 --avoid-obvious-pairs
+  node scripts/random_tag_selector.js --button-types -s 42
   node scripts/random_tag_selector.js -s 12345 -f json
 `);
 }
@@ -318,8 +329,9 @@ function parseArgs(args) {
     count: 3,
     seed: Date.now(),
     format: "markdown",
-    requireUnexpectedPair: false,
+    avoidObviousPairs: false,
     obviousPairsFile: "data/tags/obvious_pairs.json",
+    buttonTypes: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -340,11 +352,14 @@ function parseArgs(args) {
       case "--format":
         options.format = args[++i];
         break;
-      case "--require-unexpected-pair":
-        options.requireUnexpectedPair = true;
+      case "--avoid-obvious-pairs":
+        options.avoidObviousPairs = true;
         break;
       case "--obvious-pairs":
         options.obviousPairsFile = args[++i];
+        break;
+      case "--button-types":
+        options.buttonTypes = true;
         break;
       case "-h":
       case "--help":
@@ -359,6 +374,12 @@ function parseArgs(args) {
 // Main
 function main() {
   const options = parseArgs(process.argv.slice(2));
+
+  if (options.buttonTypes) {
+    const rng = new Xorshift128(hashSeed(options.seed));
+    console.log(`button_types: ${rng.nextInt(1, 5)} (seed: ${options.seed})`);
+    return;
+  }
 
   if (options.count < 1 || options.count > 10) {
     console.error("Error: count must be between 1 and 10");
@@ -375,15 +396,14 @@ function main() {
   const rng = new Xorshift128(options.seed);
   let selected;
 
-  if (options.requireUnexpectedPair) {
-    if (options.count < 2) {
-      console.error(
-        "Error: --require-unexpected-pair requires selecting at least 2 tags."
-      );
-      process.exit(1);
-    }
+  if (options.avoidObviousPairs) {
     const obviousPairs = loadObviousPairs(options.obviousPairsFile);
-    selected = selectTagsWithConstraint(tags, options.count, rng, obviousPairs);
+    selected = selectTagsAvoidingObviousPairs(
+      tags,
+      options.count,
+      rng,
+      obviousPairs
+    );
   } else {
     selected = selectTags(tags, options.count, rng);
   }
